@@ -1,0 +1,190 @@
+What is cookbook?
+. like a "package: for chef recipes.
+. contains all the recipess, files , templates, libraries etc to configure a portion of ur infrastructure.
+
+Task:
+Create a webserver at client to serve up our home page
+.Success criteria: we can se the homepage in a web browser.
+
+Required Steps.
+.Install Apache.
+. Start the service, and make sure it will start when the machine boots.
+. write out the home page
+
+Create cook book apache
+
+$ knife cookbook create apache
+
+cd cookbooks/
+root@raspc:/home/ras/chef-repo/cookbooks# ls
+apache  chefignore  starter
+
+root@raspc:/home/ras/chef-repo/cookbooks# cd apache/
+root@raspc:/home/ras/chef-repo/cookbooks/apache# ls -lart
+total 52
+drwxr-xr-x  4 ras  ras  4096 Apr  7 19:52 ..
+drwxr-xr-x  2 root root 4096 Apr  7 19:52 attributes
+drwxr-xr-x  3 root root 4096 Apr  7 19:52 templates
+drwxr-xr-x  2 root root 4096 Apr  7 19:52 resources
+drwxr-xr-x  2 root root 4096 Apr  7 19:52 recipes
+-rw-r--r--  1 root root 1455 Apr  7 19:52 README.md
+drwxr-xr-x  2 root root 4096 Apr  7 19:52 providers
+-rw-r--r--  1 root root  276 Apr  7 19:52 metadata.rb
+drwxr-xr-x  2 root root 4096 Apr  7 19:52 libraries
+drwxr-xr-x  3 root root 4096 Apr  7 19:52 files
+drwxr-xr-x  2 root root 4096 Apr  7 19:52 definitions
+-rw-r--r--  1 root root  433 Apr  7 19:52 CHANGELOG.md
+drwxr-xr-x 10 root root 4096 Apr  7 19:52 .
+
+
+
+## open in sublime text editor, browse upto cookbook/apache and then add location
+/home/ras/chef-repo/cookbooks/apache/recipes/default.rb
+
+
+//note for centos package is "httpd"
+
+package "apache2" do
+	action :install
+end
+
+service "apache2" do
+	action [:enable, :start]
+end
+
+cookbook_file "/var/www/html/index.html" do
+	source "index.html"
+	mode "0644"
+end
+
+
+/home/ras/chef-repo/cookbooks/apache/recipes/default/index.html
+
+<!DOCTYPE html>
+<html>
+<head>
+	<title>"hello world</title>
+</head>
+<body>
+   <h1> Hello, world! </h1>
+</body>
+</html>
+
+
+
+#### upload cookbook to chef server
+
+knife cookbook upload apache
+
+# Add apache recipe to node1 run_list
+knife node run_list add node1 "recipe[apache]"
+
+.Recipe is the orderlist of recipe and roles that chef-client will execute on the node
+. recipe specified by "recipe[name]" and roles by "role[name]"
+
+
+
+On chef-client
+
+run $ chef-client
+
+and open browser, it will show "hello world"    :)
+
+
+on workspace check node using
+
+root@raspc:/home/ras/chef-repo# knife node list
+node1
+
+
+# tree view 
+apt-get install tree
+
+apt-get update
+
+tree
+root@raspc:/home/ras/chef-repo# tree
+.
+├── cookbooks
+│   ├── apache
+│   │   ├── attributes
+│   │   ├── CHANGELOG.md
+│   │   ├── definitions
+│   │   ├── files
+│   │   │   └── default
+│   │   │       └── index.html
+│   │   ├── libraries
+│   │   ├── metadata.rb
+│   │   ├── providers
+│   │   ├── README.md
+│   │   ├── recipes
+│   │   │   └── default.rb
+│   │   ├── resources
+│   │   └── templates
+│   │       └── default
+│   ├── chefignore
+│   └── starter
+│       ├── attributes
+│       │   └── default.rb
+│       ├── files
+│       │   └── default
+│       │       └── sample.txt
+│       ├── metadata.rb
+│       ├── recipes
+│       │   └── default.rb
+│       └── templates
+│           └── default
+│               └── sample.erb
+├── README.md
+└── roles
+    └── starter.rb
+
+
+
+# At client node
+
+. During compilation phase,chef
+1. loads all cookbooks from runlist
+2. reads each recipe to build resource collection
+
+. During execution phase, chef takes resource  collection  and for each resource it will 
+1., check if resource is in desired state, if yes , do nothing else bring in line with required state.
+2. move to next resource
+
+
+// shoe node1 content
+knife node show node1
+Node Name:   node1
+Environment: _default
+FQDN:        test02.edureka.com
+IP:          192.168.0.4
+Run List:    recipe[apache]
+Roles:       
+Recipes:     apache, apache::default
+Platform:    ubuntu 14.04
+
+
+// show in jason format
+
+root@raspc:/home/ras/chef-repo# knife node show node1 -Fj
+{
+  "name": "node1",
+  "chef_environment": "_default",
+  "run_list": [
+  "recipe[apache]"
+]
+,
+  "normal": {
+    "tags": [
+
+    ]
+  }
+}
+
+
+
+
+
+
+
+

@@ -1,0 +1,261 @@
+
+
+set attribute in attribute folder,
+1. create default.rb file
+cat default.rb
+default["apache"]["indexfile"]= "index1.html"
+
+2 . create another index1.html file in file/default
+
+cat index1.html
+
+<!DOCTYPE html>
+<html>
+<head>
+	<title>"hello world</title>
+</head>
+<body>
+   <h1> Hello, world! </h1>
+</body>
+</html>
+
+
+3. change recipe/default.rb
+
+
+from 
+
+#source "index.html"   
+to
+
+ source node["apache"]["indexfile"]
+
+
+
+4. knife cookbook upload apache
+
+
+5, on chef client
+
+run ,
+chef-client   (it will check runlist which was already uploaded)
+open browser and see content " index " in the output
+
+///////////////////////////////////////////////////////////////////////
+update content in file /var/www/html/index.html from f921c7 to 7bf8e1
+    --- /var/www/html/index.html	2017-04-07 20:33:47.843272413 +0530
+    +++ /var/www/html/.chef-index20170407-4129-1n54tgb.html	2017-04-07 23:21:17.795750959 +0530
+    @@ -4,7 +4,6 @@
+     	<title>"hello world</title>
+     </head>
+     <body>
+    -   <h1> Hello, world! </h1>
+    +   <h1> index2 </h1>
+     </body>
+    -</html>
+///////////////////////////////////////////////////////////
+
+http://192.168.0.8/
+output index2
+
+
+
+//////override attribute, attribute defined in attribute/file witll be overidden by which defined in recipes
+
+create anothe index2.html inside cookbook-name/file/index2.hmtl
+
+<!DOCTYPE html>
+<html>
+<head>
+	<title>"hello world</title>
+</head>
+<body>
+   <h1> this will overide already define attribute in attribute folder with one define in recipe</h1>
+</body>
+
+
+2. edit recipe
+
+cookbook_file "/var/www/html/index.html" do
+	#source "index.html"
+	#source node["apache"]["indexfile"]
+
+	#overide attribute
+	source node.default["apache"]["indexfile"]= "index2.html"    // this attribute will override previous definition on attribute/file/default.rb //
+	mode "0644"
+
+
+3. On client, run chef-client 
+
+
+
+following changes you will note
+
+@@ -4,6 +4,6 @@
+     	<title>"hello world</title>
+     </head>
+     <body>
+    -   <h1> index2 </h1>
+    +   <h1> this will overide already define attribute in attribute folder with one define in recipe</h1>
+     </body>
+
+
+4, open browser,
+192.18.0.8
+this will overide already define attribute in attribute folder with one define in recipe  [[output]
+
+////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////
+
+
+Attribute,template,cookbook Dependencies
+
+
+writing an MOTD cookbook
+
+
+Problem: we need to add a message that appear at login that states,
+
+"this server is property of Company"
+"dependes upon scope of PCI complance", if this server exist only then this message should be shown"
+
+solution:
+ We see the message when we login to test node'
+
+
+
+1 create cookbook motd
+knife cookbook create motd
+
+
+cd /home/ras/chef-repo/cookbooks/motd/attributes
+
+create attribute 
+
+ cat default.rb 
+default["motd"]["company"]  = "edureka"
+
+
+2. add template resource for /etc/motd in the recipe/default.rb
+
+resource has 2 parameters
+source is "motd.erb"
+mode is "0644"
+  
+cat default.erb
+
+template "/etc/motd" do
+  source "motd.erb"
+  mode "0644"	
+end
+
+
+
+3. cd motd/template/default
+
+create motd.erb file (erb is embeded ruby )
+
+cat motd.erb
+This server is property of <%=node["motd"]["company"] %>
+<% if node["pci"]["in_scope"] -%>
+	This server is in scope for PCI compliance
+	<%end -%>
+
+4. create cookbook pci
+knife cookbook create pci
+
+5. set attribute file in /home/ras/chef-repo/cookbooks/pci/attributes
+
+cat default.rb
+default["pci"]["in_scope"] = true
+
+
+6. knife cookbook upload pci
+
+7.  knife node run_list add node1 "recipe[motd]"
+node1:
+  run_list:
+    recipe[apache]
+    recipe[motd]
+
+
+8.  knife node show node1
+Node Name:   node1
+Environment: _default
+FQDN:        test02.edureka.com
+IP:          192.168.0.8
+Run List:    recipe[apache], recipe[motd]
+Roles:       
+Recipes:     apache, apache::default
+Platform:    ubuntu 14.04
+Tags:        
+
+
+9 chef-client
+
+//fail to add pci in run list
+
+resolving cookbooks for run list: ["apache", "motd"]   //show only this when chef-client run
+
+10. to resolve cookbook dependence add pci cookbook in the metadate.rb of cookbook/motd/metadeta.rb
+
+version          '0.1.0'
+depends           "pci"
+
+
+11. knife cookbook upload motd
+Uploading motd           [0.1.0]
+
+
+12 chef-client
+0] INFO: Loading cookbooks [apache@0.1.0, motd@0.1.0, pci@0.1.0]
+- create new file /etc/motd[2017-04-08T00:48:21+05:30] INFO: template[/etc/motd] updated file contents /etc/motd
+
+    - update content in file /etc/motd from none to fa53cd
+    --- /etc/motd	2017-04-08 00:48:21.953304619 +0530
+    +++ /etc/.chef-motd20170408-4882-1lo8hwr	2017-04-08 00:48:21.953304619 +0530
+    @@ -1 +1,4 @@
+    +This server is property of edureka
+    +	This server is in scope for PCI compliance
+    +	[2017-04-08T00:48:21+05:30] INFO: template[/etc/motd] mode changed to 644
+
+    - change mode from '' to '0644
+
+
+
+13 . cat /etc/motd
+This server is property of edureka
+	This server is in scope for PCI compliance
+	root@test02:~# 
+
+
+
+
+sucesss :)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

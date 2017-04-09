@@ -1,0 +1,171 @@
+Roles make it easy to configure many nodes identicals without repeating each time
+
+Open in editor"
+roles/webserver.rb
+
+name "webserver"
+description "Web Server"
+run_lists "recipe[apache]"
+default_attribute(
+
+)
+
+
+2. create a role
+
+knife roles from file webserver.rb
+
+3. show the role with webserver
+
+knife role show webserver
+
+4. Exercise in manage console, replace the recipe[apache] with role[webserver]
+
+5. rerun chef-client
+
+6. Display the apache.sites attribute on all nodes with webserver role
+
+   knife search node "role:webserver" -a apache.sites
+
+
+
+========= 
+Best practice: Have "base" roles:  where you can include all the recipes that should run on every node
+
+
+1. Exercise: create base role
+
+roles.base.rb
+
+name "base"
+description "base server role"
+run_list "recipe[motd]", "recipe[users]"
+
+
+
+2. Create the role
+
+knide role from file base.rb
+
+
+3. Update webserver.rb role
+
+name "webserver"
+description "Web Server"
+run_list "role[base]", "recipe[apache]"
+
+default_attributes({
+	"apache"=>{
+		"sites"=>{
+			"admin"=>{
+				"port" => 8000
+			}
+		}
+	}
+}
+
+
+4. update the webserver role
+
+knife role from file webserver.rb
+
+5. Set the run_list to just role[webserver]
+
+chef_type:           role
+default_attributes:
+  apache:
+    sites:
+      admin:
+        port: 8000
+description:         Web Server
+env_run_lists:
+json_class:          Chef::Role
+name:                webserver
+override_attributes:
+run_list:            recipe[apache]
+
+
+6. rerun chef-client
+2017-04-08T18:03:29+05:30] INFO: Run List is [role[webserver], recipe[users], recipe[motd]]
+[2017-04-08T18:03:29+05:30] INFO: Run List expands to [apache, users, motd]
+
+
+knife search node "role:webserver" -a apache.sites
+1 items found
+
+node1:
+  apache.sites:
+    admin:
+      port: 8000
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+=[=====================ENvironment=======================
+
+
+. Every org start with single Environment
+. Environment reflect your pattern and workflow
+
+  developement, test,staging, production, etc
+
+1. Exercise: use knife to show available cookbook version;
+
+knife cookbook show apache
+apache   0.2.0  0.1.0
+
+
+
+2. List current env
+knife environment list
+_default
+
+
+3 make environment dir
+
+mkdir environments
+
+4 create dev env
+
+environments/dev.rb
+
+name "dev"
+description "For developemnt"
+cookbook "apache", "=0.2.0"
+
+
+4. knife environment from file dev.rb
+Updated Environment dev
+
+5. knife environment show dev
+root@raspc:/home/ras/chef-repo#  knife environment show dev
+chef_type:           environment
+cookbook_versions:
+  apache: = 0.2.0
+default_attributes:
+description:         For developemnt
+json_class:          Chef::Environment
+name:                dev
+override_attributes:
+
+
+
+
+
+
+
+
+
+
+)
+

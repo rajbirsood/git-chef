@@ -1,0 +1,209 @@
+. will explan what data bags are.
+. describe the User and Group Resources.
+. use the include_recipe directive
+. describe the role search play recipes
+
+The Problem: Employee should have local user accounts on servers, along with customs groups.
+
+Sucess Criteria:  We can add new employees and group to servers dynamically
+
+
+Data bags: is a containers for items that represents info about your instructure that is not tied to a single node.
+Example:
+   . Users
+   . Groups
+   . Application release info
+
+
+1. We need to manual create data bags
+root@raspc:/home/ras/chef-repo# mkdir -p data_bags/users
+
+2. knife data_bag create users
+  Created data_bag[user]
+
+3. CREATE a user item in the users data bag
+
+ data_bags/users/bobo.json
+    {
+	"id": "bobo",
+	 "comment": "Bobo T. Clown",
+	  "uid" : 2000,
+	   "gid": 0,
+	   "home": "/home/bobo",
+	   "shell": "/bin/bash"
+
+	}
+
+
+4. create data bag item.
+ knife data_bag from file users bobo.json
+Updated data_bag_item[users::bobo]
+
+5. create another user frank.json  in data_bags/users/
+{
+	"id": "frank",
+	 "comment": "Frank Belson",
+	  "uid" : 2001,
+	   "gid": 0,
+	   "home": "/home/frank",
+	   "shell": "/bin/bash"
+
+	}
+
+6. create data bag item for frank
+ knife data_bag from file users frank.json
+ Updated data_bag_item[users::frank]
+
+
+7. search users
+
+knife search users "*:*"
+2 items found
+
+chef_type: data_bag_item
+comment:   Frank Belson
+data_bag:  users
+gid:       0
+home:      /home/frank
+id:        frank
+shell:     /bin/bash
+uid:       2001
+
+chef_type: data_bag_item
+comment:   Bobo T. Clown
+data_bag:  users
+gid:       0
+home:      /home/bobo
+id:        bobo
+shell:     /bin/bash
+uid:       2000
+
+
+
+8 Exerice: search Bobo'shell in users
+knife search users "id:bobo" -a shell
+
+1 items found
+
+:
+  shell: /bin/bash
+
+//////// 
+
+create data bag named groups
+
+9. $mkdir -p /data_bags/groups
+10 $knife data_bag create groups
+Created data_bag[groups]
+
+11.create a group item in the grouo data bag
+
+data_bags/groups/clown.json
+{
+ "id": "clowns",
+  "gid": 3000,
+  "members": ["bobo", "frank"]
+
+}
+
+
+12. create the data bag item
+
+knife data_bag from file groups clown.json
+Updated data_bag_item[groups::clowns]
+
+
+13: EXercide search the groups in chef
+
+knife search groups "*:*"
+
+1 items found
+
+chef_type: data_bag_item
+data_bag:  groups
+gid:       3000
+id:        clowns
+members:
+  bobo
+  frank
+
+14. Create cookbook users
+
+knife cookbook create users
+
+15. Open its default recipe
+
+search("users", "*:*").	each do |user_data|
+	user user_data["id"] do
+		comment user_data["comment"]
+		uid user_data["uid"]
+		gid user_data["gid"]
+		home user_data["home"]
+		shell user_data["shell"]
+	end
+end
+
+include_recipe "users::groups"
+
+
+
+16. create users::groups recipe in
+ cookbooks/users/recipes/groups.rb
+
+  search("groups", "*:*").each do |group_data|
+	group group_data["id"] do
+		 gid group_data["gid"]
+		 memmbers  group_data["memmbers"]
+		end
+	end
+
+
+17 Upload the users cookbook
+
+knife cookbook upload users
+Uploading users          [0.1.0]
+Uploaded 1 cookbook.
+
+
+
+18 Add user recipe to node1 run_list
+
+knife node run_list add node1 'recipe[users]'
+Uploading users          [0.1.0]
+Uploaded 1 cookbook.
+
+
+19 At client
+
+$client-chef
+
+- create user frank
+  * linux_user[bobo] action create[2017-04-08T17:47:44+05:30] INFO: Processing linux_user[bobo] action create (users::default line 12)
+[2017-04-08T17:47:44+05:30] INFO: linux_user[bobo] created
+
+    - create user bobo
+Recipe: users::groups
+  * group[clowns] action create[2017-04-08T17:47:44+05:30] INFO: Processing group[clowns] action create (users::groups line 2)
+[2017-04-08T17:47:44+05:30] INFO: group[clowns] created
+
+    - create group clowns
+
+
+
+verify the users and groups exists
+
+cat /etc/passwd
+
+frank:x:2001:0:Frank Belson:/home/frank:/bin/bash
+bobo:x:2000:0:Bobo T. Clown:/home/bobo:/bin/bash
+
+cat /etc/group
+clowns:x:3000:bobo,frank
+
+
+
+
+
+
+
+

@@ -1,0 +1,5 @@
+http://www.tothenew.com/blog/chef-test-kitchen-how-to-test-chef-recipes-on-your-workstation/
+http://kitchen.ci/docs/getting-started/
+
+
+CHEF test kitchen has enabled us to reduce new cookbook/recipes testing time to minutes by provisioning VAGRANT box on our local workstation.

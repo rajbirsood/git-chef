@@ -1,0 +1,25 @@
+.will use execute resource
+. only_if and not_if guard
+.use ruby variables,loops, and string expansion
+
+
+Problem:
+  we need to deploy mutiple custom home pages running on different port
+
+Success:
+  Be able to view our custom page
+
+1. change existing apache cook book version in metadate.rb file
+version   "0.2.0" 
+  we can check different version at server manage console.
+
+2. edit attribute file in apache/attributes/default.rb
+
+
+
+3.open default apcahe recipes/default.rb
+
+
+To Do----------later
+
+

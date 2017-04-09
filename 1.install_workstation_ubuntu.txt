@@ -1,0 +1,74 @@
+site//
+
+
+https://www.linode.com/docs/applications/chef/deploy-a-chef-server-workstation-and-node-on-ubuntu-14-04
+
+wget https://packages.chef.io/files/current/chefdk/1.3.32/ubuntu/14.04/chefdk_1.3.32-1_amd64.deb
+
+dpkg -i chefdk_*.deb
+
+#Verify the components of the development kit:
+
+
+chef verify
+
+
+#download sublime textpad
+
+$ sudo add-apt-repository ppa:webupd8team/sublime-text-3
+$ sudo apt-get update
+$ sudo apt-get install sublime-text-installer
+
+If you wish to uninstall and remove Sublime Text Editor from Ubuntu Systems, run the command given below:
+
+$ sudo apt-get remove sublime-text-installer
+
+
+###########################
+add node 
+
+root@raspc:~# ssh chef@192.168.0.4     /////////// syntax username@external_ipadreess
+chef@192.168.0.4's password: 
+Permission denied, please try again.
+chef@192.168.0.4's password: 
+Permission denied, please try again.
+chef@192.168.0.4's password: 
+
+root@raspc:~# ssh edureka@192.168.0.4
+edureka@192.168.0.4's password: edureka
+
+
+
+######add cliet node###############
+root@raspc:/home/ras/chef-repo# knife bootstrap 192.168.0.4 --sudo -x edureka -P edureka -N "node1"
+Node node1 exists, overwrite it? (Y/N) y
+Client node1 exists, overwrite it? (Y/N) y
+Creating new client for node1
+Creating new node for node1
+Connecting to 192.168.0.4
+192.168.0.4 knife sudo password: 
+192.168.0.4 
+192.168.0.4 -----> Installing Chef Omnibus (-v 12)
+192.168.0.4 downloading https://omnitruck-direct.chef.io/chef/ins
+
+
+
+
+### this above command will install chef-client, knife, ohai, ruby langauage
+
+at client node 
+root@test02:~# cd /etc/chef/
+root@test02:/etc/chef# vi client.rb
+
+set loglevel "info"
+
+run root@test02:/etc/chef# chef-client
+[2017-04-07T19:35:41+05:30] INFO: Forking chef instance to converge...
+Starting Chef Client, version 12.19.36
+[2017-04-07T19:35:41+05:30] INFO: *** Chef 12.19.36 ***
+[2017-04-07T19:35:41+05:30] INFO: Platform: x86_64-linux
+[2017-04-07T19:35:41+05:30] INFO: Chef-client pid: 3814
+
+
+
+
